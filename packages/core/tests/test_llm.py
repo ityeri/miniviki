@@ -4,7 +4,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import ClassVar
 
 import pytest
-from miniviki.core import MinivikiError
+from miniviki.core import LLMError, MinivikiError
 from miniviki.core.llm import (
     Message,
     OpenAICompatClient,
@@ -55,6 +55,35 @@ class _StubHandler(BaseHTTPRequestHandler):
 
     def log_message(self, *args) -> None:
         return None
+
+
+class _ErrorHandler(BaseHTTPRequestHandler):
+    def do_POST(self) -> None:
+        payload = {
+            "error": {
+                "message": "Invalid 'tools[0].function.name': string does not match pattern.",
+                "type": "invalid_request_error"
+            }
+        }
+        body = json.dumps(payload).encode("utf-8")
+        self.send_response(400)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args) -> None:
+        return None
+
+
+@pytest.fixture
+def error_server():
+    server = HTTPServer(("127.0.0.1", 0), _ErrorHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    yield f"http://127.0.0.1:{server.server_port}/v1"
+    server.shutdown()
+    thread.join(timeout=5)
 
 
 @pytest.fixture
@@ -187,3 +216,14 @@ async def test_openai_compat_client_sends_the_expected_request(stub_server):
     assert sent["model"] == "stub-model"
     assert sent["messages"] == [{"role": "user", "content": "hi"}]
     assert sent["tools"][0]["function"]["name"] == "exec"
+
+
+async def test_a_provider_error_carries_the_body(error_server):
+    client = OpenAICompatClient(base_url=error_server, api_key="k", model="m")
+    try:
+        with pytest.raises(LLMError) as caught:
+            await client.complete([Message(role="user", content="hi")], [ToolSchema(name="exec")])
+    finally:
+        await client.aclose()
+    assert "400" in str(caught.value)
+    assert "function.name" in str(caught.value)

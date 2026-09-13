@@ -4,7 +4,7 @@ from typing import Any
 
 import httpx
 
-from ..errors import MinivikiError
+from ..errors import LLMError, MinivikiError
 from .types import Completion, Message, ToolCall, ToolSchema
 
 
@@ -74,6 +74,27 @@ def from_openai_response(raw_data: dict[str, Any]) -> Completion:
     )
 
 
+def error_detail(response: httpx.Response) -> str:
+    """Providers explain themselves in the body.
+
+    Surfacing it is the difference between a five minute fix and an afternoon of
+    guessing why a run went quiet.
+    """
+    try:
+        payload = response.json()
+    except ValueError:
+        return response.text[:500]
+    if isinstance(payload, dict):
+        return json.dumps(payload.get("error", payload))[:500]
+    return json.dumps(payload)[:500]
+
+
+def check(response: httpx.Response, base_url: str) -> None:
+    if response.status_code < 400:
+        return
+    raise LLMError(f"HTTP {response.status_code} from {base_url}: {error_detail(response)}")
+
+
 @dataclass(slots=True)
 class OpenAICompatClient:
     """Talks to any OpenAI-shaped endpoint. The translation lives here, not in the loop."""
@@ -103,7 +124,7 @@ class OpenAICompatClient:
             headers={"Authorization": f"Bearer {self.api_key}"},
             json=self._payload(list(messages), list(tools))
         )
-        response.raise_for_status()
+        check(response, self.base_url)
         return from_openai_response(response.json())
 
     async def stream(self, messages, tools=()):
@@ -114,7 +135,7 @@ class OpenAICompatClient:
             headers={"Authorization": f"Bearer {self.api_key}"},
             json=payload
         ) as response:
-            response.raise_for_status()
+            check(response, self.base_url)
             async for line in response.aiter_lines():
                 if not line.startswith("data: "):
                     continue

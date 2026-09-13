@@ -36,6 +36,13 @@ class RunDriver:
                 "status": "interrupted",
                 "stop_reason": "the client interrupted this run"
             }
+        except Exception as error:
+            payload = {
+                "run_id": run_id,
+                "status": "failed",
+                "stop_reason": f"{type(error).__name__}: {error}",
+                "error": str(error)
+            }
         self.registry.runtime.log.append(session.id, EventKind.RUN_END, payload)
 
     async def interrupt(self, session: Session) -> bool:

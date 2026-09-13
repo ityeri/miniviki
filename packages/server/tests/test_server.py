@@ -223,3 +223,23 @@ async def test_the_initial_context_digest_is_deterministic(tmp_path):
         second = (await http.post("/contexts", json={})).json()
     assert first["initial_context_digest"] == second["initial_context_digest"]
     assert first["id"] != second["id"]
+
+
+class _ExplodingModel:
+    async def complete(self, messages, tools=()):
+        raise RuntimeError("the provider refused the request")
+
+    async def stream(self, messages, tools=()):
+        yield ""
+
+
+async def test_a_failing_model_is_recorded_rather_than_swallowed(tmp_path):
+    runtime = Runtime.build(llm=_ExplodingModel(), home=tmp_path / "home")
+    async with serve(runtime) as http:
+        context_id = (await http.post("/contexts", json={})).json()["id"]
+        submitted = await http.post(f"/contexts/{context_id}/input", json={"text": "hi"})
+        assert submitted.status_code == 200
+        events = await collect(http, context_id)
+    assert events[-1]["kind"] == "run_end"
+    assert events[-1]["payload"]["status"] == "failed"
+    assert "the provider refused the request" in events[-1]["payload"]["stop_reason"]
