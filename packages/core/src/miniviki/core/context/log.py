@@ -55,7 +55,8 @@ class EventLog:
         seq = self.last_seq(context_id) + 1
         stamp = time.time() if created_at is None else created_at
         self._execute(
-            "INSERT INTO events (context_id, seq, kind, payload, created_at) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO events (context_id, seq, kind, payload, created_at)"
+            " VALUES (?, ?, ?, ?, ?)",
             (context_id, seq, str(kind), json.dumps(payload, ensure_ascii=False), stamp)
         )
         return ContextEvent(
@@ -72,7 +73,10 @@ class EventLog:
         from_seq: int = 0,
         limit: int | None = None
     ) -> list[ContextEvent]:
-        sql = "SELECT context_id, seq, kind, payload, created_at FROM events WHERE context_id = ? AND seq >= ? ORDER BY seq"
+        sql = (
+            "SELECT context_id, seq, kind, payload, created_at FROM events"
+            " WHERE context_id = ? AND seq >= ? ORDER BY seq"
+        )
         params: list[Any] = [context_id, from_seq]
         if limit is not None:
             sql += " LIMIT ?"

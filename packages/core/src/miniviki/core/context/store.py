@@ -87,7 +87,8 @@ class ContextStore:
         if self.log.connection is None:
             raise RuntimeError("context store is closed")
         self.log.connection.execute(
-            "INSERT INTO contexts (id, parent_id, kind, label, soul_ref, toolset_version, owner_id, created_at)"
+            "INSERT INTO contexts"
+            " (id, parent_id, kind, label, soul_ref, toolset_version, owner_id, created_at)"
             " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 record.id,
