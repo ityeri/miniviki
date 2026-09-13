@@ -8,7 +8,12 @@ def spec(name: str, requires_approval: bool = False) -> ToolSpec:
     async def handler(**_arguments: object) -> str:
         return "ok"
 
-    return ToolSpec(name=name, description="d", handler=handler, requires_approval=requires_approval)
+    return ToolSpec(
+        name=name,
+        description="d",
+        handler=handler,
+        requires_approval=requires_approval
+    )
 
 
 def test_client_tools_are_qualified_into_the_client_namespace():

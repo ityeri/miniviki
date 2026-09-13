@@ -5,8 +5,6 @@ from miniviki.core.llm import EchoClient, LLMClient, OpenAICompatClient, Scripte
 
 from .bootstrap import Runtime
 
-DEFAULT_HOST = "127.0.0.1"
-DEFAULT_PORT = 8000
 TRUE_WORDS = {"1", "true", "yes", "on"}
 
 
