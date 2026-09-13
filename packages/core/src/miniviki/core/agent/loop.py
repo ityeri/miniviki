@@ -6,7 +6,7 @@ from typing import Any
 from ..context import ContextLock, EventKind, EventLog, project
 from ..errors import ContextLocked, ToolNotFound
 from ..hooks import AFTER_LLM, AFTER_TOOL, BEFORE_LLM, BEFORE_TOOL, RUN_END, HookBus
-from ..llm import LLMClient
+from ..llm import LLMClient, Message
 from ..tools import Toolset, ToolSpec
 from .approval import ApprovalGate, Decision
 from .run import RunRecord, RunStatus
@@ -31,6 +31,7 @@ class AgentLoop:
     lock: ContextLock = field(default_factory=ContextLock)
     max_steps: int = 24
     holder: str = "core"
+    system: str = ""
 
     async def run(self, context_id: str, user_input: str | None = None) -> RunRecord:
         try:
@@ -112,6 +113,8 @@ class AgentLoop:
 
     async def _think(self, context_id: str):
         messages = project(self.log.read(context_id))
+        if self.system:
+            messages = [Message(role="system", content=self.system), *messages]
         self.hooks.publish(BEFORE_LLM, {"context_id": context_id, "messages": messages})
         completion = await self.llm.complete(messages, self.toolset.schemas())
         self.hooks.publish(

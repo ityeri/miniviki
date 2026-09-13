@@ -10,6 +10,7 @@ class EventKind(StrEnum):
     COMPACT = "compact"
     BOUNDARY = "boundary"
     APPROVAL = "approval"
+    RUN_END = "run_end"
 
 
 @dataclass(frozen=True, slots=True)

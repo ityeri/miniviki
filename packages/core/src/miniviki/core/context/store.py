@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS contexts (
     soul_ref        TEXT,
     toolset_version TEXT NOT NULL DEFAULT '',
     owner_id        TEXT NOT NULL DEFAULT 'local',
-    created_at      REAL NOT NULL
+    created_at      REAL NOT NULL,
+    initial_context_digest TEXT NOT NULL DEFAULT ''
 );
 """
 
@@ -39,6 +40,7 @@ class ContextRecord:
     toolset_version: str = ""
     owner_id: str = "local"
     created_at: float = 0.0
+    initial_context_digest: str = ""
 
     @staticmethod
     def from_json(raw_data: dict[str, Any]) -> Self:
@@ -50,7 +52,8 @@ class ContextRecord:
             soul_ref=raw_data.get("soul_ref"),
             toolset_version=str(raw_data.get("toolset_version", "")),
             owner_id=str(raw_data.get("owner_id", "local")),
-            created_at=float(raw_data.get("created_at") or 0.0)
+            created_at=float(raw_data.get("created_at") or 0.0),
+            initial_context_digest=str(raw_data.get("initial_context_digest", ""))
         )
 
 
@@ -64,6 +67,14 @@ class ContextStore:
         if self.log.connection is None:
             raise RuntimeError("context store needs an open event log")
         self.log.connection.executescript(_SCHEMA)
+        columns = {
+            str(row[1]) for row in self.log.connection.execute('PRAGMA table_info(contexts)')
+        }
+        if 'initial_context_digest' not in columns:
+            self.log.connection.execute(
+                "ALTER TABLE contexts ADD COLUMN initial_context_digest"
+                " TEXT NOT NULL DEFAULT ''"
+            )
 
     def create(
         self,
@@ -72,7 +83,8 @@ class ContextStore:
         label: str = "",
         soul_ref: str | None = None,
         toolset_version: str = "",
-        owner_id: str = "local"
+        owner_id: str = "local",
+        initial_context_digest: str = ""
     ) -> ContextRecord:
         record = ContextRecord(
             id=f"ctx_{secrets.token_hex(6)}",
@@ -82,14 +94,16 @@ class ContextStore:
             soul_ref=soul_ref,
             toolset_version=toolset_version,
             owner_id=owner_id,
-            created_at=time.time()
+            created_at=time.time(),
+            initial_context_digest=initial_context_digest
         )
         if self.log.connection is None:
             raise RuntimeError("context store is closed")
         self.log.connection.execute(
             "INSERT INTO contexts"
-            " (id, parent_id, kind, label, soul_ref, toolset_version, owner_id, created_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            " (id, parent_id, kind, label, soul_ref, toolset_version, owner_id,"
+            " created_at, initial_context_digest)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 record.id,
                 record.parent_id,
@@ -98,7 +112,8 @@ class ContextStore:
                 record.soul_ref,
                 record.toolset_version,
                 record.owner_id,
-                record.created_at
+                record.created_at,
+                record.initial_context_digest
             )
         )
         return record
@@ -107,7 +122,8 @@ class ContextStore:
         if self.log.connection is None:
             raise RuntimeError("context store is closed")
         row = self.log.connection.execute(
-            "SELECT id, parent_id, kind, label, soul_ref, toolset_version, owner_id, created_at"
+            "SELECT id, parent_id, kind, label, soul_ref, toolset_version, owner_id,"
+            " created_at, initial_context_digest"
             " FROM contexts WHERE id = ?",
             (context_id,)
         ).fetchone()
@@ -121,7 +137,8 @@ class ContextStore:
             soul_ref=row[4],
             toolset_version=str(row[5]),
             owner_id=str(row[6]),
-            created_at=float(row[7])
+            created_at=float(row[7]),
+            initial_context_digest=str(row[8])
         )
 
     def children(self, context_id: str) -> list[ContextRecord]:
