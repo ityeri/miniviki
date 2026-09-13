@@ -42,7 +42,7 @@ class Message:
 @dataclass(frozen=True, slots=True)
 class ToolSchema:
     name: str
-    description: str
+    description: str = ""
     parameters: dict[str, Any] = field(default_factory=dict)
 
     @staticmethod
