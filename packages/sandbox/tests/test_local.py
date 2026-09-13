@@ -1,12 +1,5 @@
-import pytest
 
-from miniviki.sandbox import (
-    ExecResult,
-    LocalSandboxProvider,
-    Sandbox,
-    SandboxProvider,
-    SandboxSpec
-)
+from miniviki.sandbox import ExecResult, LocalSandboxProvider, Sandbox, SandboxProvider, SandboxSpec
 
 
 async def test_local_provider_satisfies_protocol():
