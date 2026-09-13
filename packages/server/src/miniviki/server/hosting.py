@@ -4,6 +4,7 @@ from miniviki.core.errors import MinivikiError
 from miniviki.core.llm import EchoClient, LLMClient, OpenAICompatClient, ScriptedClient, reply
 
 from .bootstrap import Runtime
+from .env import load_env_files
 
 TRUE_WORDS = {"1", "true", "yes", "on"}
 
@@ -36,8 +37,9 @@ def build_client() -> LLMClient:
 
 
 def build_runtime() -> Runtime:
+    layout, _loaded = load_env_files()
     return Runtime.build(
         llm=build_client(),
-        home=os.environ.get("MINIVIKI_HOME"),
+        home=layout.root,
         exec_requires_approval=flag("MINIVIKI_EXEC_APPROVAL")
     )

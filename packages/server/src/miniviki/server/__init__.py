@@ -1,5 +1,6 @@
 from .app import create_app
 from .bootstrap import HomeLayout, Runtime, load_agent_soul, load_default_soul
+from .env import load_env_files
 from .hosting import build_client, build_runtime, flag
 from .negotiation import Negotiation, negotiate
 from .orchestration.runner import RunDriver
@@ -18,5 +19,6 @@ __all__ = [
     "flag",
     "load_agent_soul",
     "load_default_soul",
+    "load_env_files",
     "negotiate"
 ]

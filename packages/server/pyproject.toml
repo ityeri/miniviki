@@ -6,6 +6,7 @@ dependencies = [
     "miniviki-core",
     "miniviki-mca @ git+https://github.com/ityeri/mca.git@main",
     "fastapi>=0.115",
+    "python-dotenv>=1.0",
     "uvicorn>=0.34"
 ]
 
