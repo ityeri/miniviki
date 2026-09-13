@@ -5,7 +5,6 @@ requires-python = ">=3.14"
 [manifest]
 members = [
     "miniviki-core",
-    "miniviki-mca",
     "miniviki-sandbox",
 ]
 
@@ -161,17 +160,6 @@ requires-dist = [
     { name = "miniviki-sandbox", editable = "packages/sandbox" },
     { name = "yarl", specifier = ">=1.18" },
 ]
-
-[[package]]
-name = "miniviki-mca"
-version = "0.1.0"
-source = { editable = "packages/mca" }
-dependencies = [
-    { name = "httpx" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "httpx", specifier = ">=0.28" }]
 
 [[package]]
 name = "miniviki-sandbox"
