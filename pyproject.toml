@@ -14,3 +14,4 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 [tool.pytest.ini_options]
 testpaths = ["packages"]
 asyncio_mode = "auto"
+addopts = "--import-mode=importlib"
