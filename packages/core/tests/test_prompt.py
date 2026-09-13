@@ -37,16 +37,16 @@ def test_empty_soul_layers_do_not_leave_blank_blocks():
 
 
 def test_environment_is_generated_from_the_toolset():
-    specs = [spec("exec", "runs a command"), spec("memory:view", "reads a key")]
+    specs = [spec("exec", "runs a command"), spec("memory_view", "reads a key")]
     toolset = Toolset.from_specs(specs)
     rendered = render_environment(toolset)
     assert toolset.version in rendered
     assert "`exec` — runs a command" in rendered
-    assert "`memory:view` — reads a key" in rendered
+    assert "`memory_view` — reads a key" in rendered
 
 
 def test_environment_flags_tools_that_need_consent():
-    toolset = Toolset.from_specs([spec("exec", requires_approval=True), spec("memory:view")])
+    toolset = Toolset.from_specs([spec("exec", requires_approval=True), spec("memory_view")])
     rendered = render_environment(toolset)
     assert "Needs approval before running: exec" in rendered
 
@@ -79,7 +79,7 @@ def test_assembled_digest_is_stable_for_identical_inputs():
 def test_assembled_digest_changes_when_the_toolset_changes():
     souls = [SoulLayer(name=GLOBAL_LAYER, body="be careful")]
     before = assemble(souls, Toolset.from_specs([spec("exec")]))
-    after = assemble(souls, Toolset.from_specs([spec("exec"), spec("memory:view")]))
+    after = assemble(souls, Toolset.from_specs([spec("exec"), spec("memory_view")]))
     assert before.digest != after.digest
 
 

@@ -34,15 +34,15 @@ def test_one_tool_call_event_holds_every_call_of_a_turn(tmp_path):
         {
             "content": "looking around",
             "calls": [
-                {"id": "c1", "name": "memory:view", "arguments": {"key": "memory:user"}},
-                {"id": "c2", "name": "skill:list", "arguments": {}}
+                {"id": "c1", "name": "memory_view", "arguments": {"key": "memory:user"}},
+                {"id": "c2", "name": "skill_list", "arguments": {}}
             ]
         }
     )
     messages = project(log.read("ctx_a"))
     assert len(messages) == 1
     assert messages[0].role == "assistant"
-    assert [call.name for call in messages[0].tool_calls] == ["memory:view", "skill:list"]
+    assert [call.name for call in messages[0].tool_calls] == ["memory_view", "skill_list"]
     assert messages[0].tool_calls[0].arguments == {"key": "memory:user"}
 
 
@@ -93,7 +93,7 @@ def test_superseded_events_stay_in_the_log(tmp_path):
 def test_compact_keeps_boundaries_and_approvals_verbatim(tmp_path):
     log = make_log(tmp_path)
     log.append("ctx_a", EventKind.MESSAGE, {"role": "user", "content": "start"})
-    log.append("ctx_a", EventKind.BOUNDARY, {"text": "toolset 1->2", "added": ["client:shell"]})
+    log.append("ctx_a", EventKind.BOUNDARY, {"text": "toolset 1->2", "added": ["client_shell"]})
     log.append("ctx_a", EventKind.APPROVAL, {"tool": "exec", "decision": "pending"})
     event = compact(log, "ctx_a", lambda events: "summary")
     preserved = event.payload["preserved"]

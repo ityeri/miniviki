@@ -16,7 +16,7 @@ def build_spawn_tool(spawner: Spawner, requires_approval: bool = False) -> ToolS
         return await spawner(prompt, kind, mode)
 
     return ToolSpec(
-        name="context:spawn",
+        name="context_spawn",
         description=(
             "Run a task in a separate context and get back only its final answer. "
             "Use it for bulk exploration you do not want in this context."

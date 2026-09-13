@@ -29,9 +29,9 @@ class Negotiation:
 
 
 def qualify(name: str) -> str:
-    if name.startswith(f"{CLIENT_NAMESPACE}:"):
+    if name.startswith(f"{CLIENT_NAMESPACE}_"):
         return name
-    return f"{CLIENT_NAMESPACE}:{name}"
+    return f"{CLIENT_NAMESPACE}_{name}"
 
 
 def client_specs(client_tools: Sequence[ClientTool]) -> list[ToolSpec]:

@@ -8,7 +8,10 @@ CLIENT_NAMESPACE = "client"
 
 @dataclass(slots=True)
 class ToolRegistry:
-    """Registration plus two naming laws: names are unique, and only client tools use `client:`."""
+    """Registration plus two naming laws.
+
+    Names are unique, and only client tools live in the `client_` namespace.
+    """
 
     reserved_namespaces: tuple[str, ...] = (CLIENT_NAMESPACE,)
     specs: dict[str, ToolSpec] = field(default_factory=dict)
@@ -19,7 +22,7 @@ class ToolRegistry:
             raise ToolError(f"tool {spec.name!r} is already registered")
         if spec.client_scoped and spec.namespace != CLIENT_NAMESPACE:
             raise ToolError(
-                f"client scoped tool {spec.name!r} must live under {CLIENT_NAMESPACE}:"
+                f"client scoped tool {spec.name!r} must live under {CLIENT_NAMESPACE}_"
             )
         if not spec.client_scoped and spec.namespace in self.reserved_namespaces:
             raise ToolError(
@@ -48,7 +51,7 @@ class ToolRegistry:
         for spec in specs:
             validate_tool_name(spec.name)
             if spec.namespace != CLIENT_NAMESPACE:
-                raise ToolError(f"injected tool {spec.name!r} must live under {CLIENT_NAMESPACE}:")
+                raise ToolError(f"injected tool {spec.name!r} must live under {CLIENT_NAMESPACE}_")
             if spec.name in merged:
                 raise ToolError(f"injected tool {spec.name!r} collides with an existing tool")
             merged[spec.name] = spec

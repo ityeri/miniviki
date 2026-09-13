@@ -13,15 +13,15 @@ def spec(
 
 
 def test_namespace_of_splits_on_the_separator():
-    assert namespace_of("client:shell") == "client"
+    assert namespace_of("client_shell") == "client"
     assert namespace_of("exec") == ""
 
 
 def test_registry_round_trip():
     registry = ToolRegistry()
-    registry.register(spec("memory:view"))
-    assert registry.names() == ["memory:view"]
-    assert registry.get("memory:view").description == "does a thing"
+    registry.register(spec("memory_view"))
+    assert registry.names() == ["memory_view"]
+    assert registry.get("memory_view").description == "does a thing"
 
 
 def test_duplicate_registration_is_refused():
@@ -38,7 +38,7 @@ def test_unknown_tool_raises():
 
 @pytest.mark.parametrize(
     "name",
-    ["", "memory:view:name.md", "memory:..:x", "memory:", ":memory", "us er"]
+    ["", "memory_view:name.md", "memory:..:x", "memory:", ":memory", "us er"]
 )
 def test_invalid_tool_names_are_refused(name):
     with pytest.raises(ToolError):
@@ -58,16 +58,16 @@ def test_builtin_cannot_squat_the_client_namespace():
 def test_injected_tools_only_enter_through_the_client_namespace():
     registry = ToolRegistry()
     registry.register(spec("exec"))
-    merged = registry.with_client_tools([spec("client:shell", client_scoped=True)])
-    assert merged.names() == ["client:shell", "exec"]
+    merged = registry.with_client_tools([spec("client_shell", client_scoped=True)])
+    assert merged.names() == ["client_shell", "exec"]
     assert registry.names() == ["exec"]
     with pytest.raises(ToolError):
         registry.with_client_tools([spec("shell")])
 
 
 def test_toolset_version_is_stable_for_identical_specs():
-    first = Toolset.from_specs([spec("exec"), spec("memory:view", "reads a key")])
-    second = Toolset.from_specs([spec("memory:view", "reads a key"), spec("exec")])
+    first = Toolset.from_specs([spec("exec"), spec("memory_view", "reads a key")])
+    second = Toolset.from_specs([spec("memory_view", "reads a key"), spec("exec")])
     assert first.version == second.version
 
 
@@ -90,22 +90,22 @@ def test_toolset_version_changes_when_the_description_changes():
 
 
 def test_diff_classifies_every_tool():
-    before = Toolset.from_specs([spec("exec"), spec("memory:view")])
-    after = Toolset.from_specs([spec("exec"), spec("client:shell", client_scoped=True)])
+    before = Toolset.from_specs([spec("exec"), spec("memory_view")])
+    after = Toolset.from_specs([spec("exec"), spec("client_shell", client_scoped=True)])
     diff = before.diff(after)
-    assert diff.added == ("client:shell",)
-    assert diff.removed == ("memory:view",)
+    assert diff.added == ("client_shell",)
+    assert diff.removed == ("memory_view",)
     assert diff.unchanged == ("exec",)
     assert not diff.is_empty()
 
 
 def test_rendered_diff_names_removals_explicitly():
-    before = Toolset.from_specs([spec("exec"), spec("client:shell", client_scoped=True)])
+    before = Toolset.from_specs([spec("exec"), spec("client_shell", client_scoped=True)])
     after = Toolset.from_specs([spec("exec")])
     text = before.diff(after).render("7", "8", from_label="cli", to_label="web")
     assert "<toolset_change" in text
     assert 'version="7->8"' in text
-    assert "  - client:shell" in text
+    assert "  - client_shell" in text
     assert "no longer callable" in text
     assert "  = exec" in text
 

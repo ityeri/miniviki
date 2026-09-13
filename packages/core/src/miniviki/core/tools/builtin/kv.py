@@ -21,7 +21,7 @@ def build_kv_tools(
     """
 
     def name(action: str) -> str:
-        return f"{namespace}:{action}"
+        return f"{namespace}_{action}"
 
     async def list_keys(prefix: str = "") -> str:
         keys = store.keys(prefix)

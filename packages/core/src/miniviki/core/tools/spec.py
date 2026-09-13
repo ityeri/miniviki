@@ -1,36 +1,38 @@
+import re
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from ..constants import DEFAULT_MAX_RESULT_CHARS, NAMESPACE_SEPARATOR
+from ..constants import DEFAULT_MAX_RESULT_CHARS
 from ..errors import ToolError
 from ..llm import ToolSchema
 
 ToolHandler = Callable[..., Awaitable[str]]
-_FORBIDDEN_CHARS = {".", "/", "\\", "\x00", " ", "\t", "\n", "\r"}
+TOOL_NAME_SEPARATOR = "_"
+TOOL_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 
 def validate_tool_name(name: str) -> str:
-    """Tool names use the same `word:word` notation as keys. No dots, no paths."""
+    """Tool names are wire identifiers, so the provider's rule is enforced here.
+
+    Every provider accepts `^[a-zA-Z0-9_-]+$` and nothing else. A colon or a dot
+    comes back as a 400 at request time, which surfaces to the user as a run that
+    died for no visible reason. So the contract is checked at construction.
+    """
     if not name:
         raise ToolError("tool name must not be empty")
-    if name.startswith(NAMESPACE_SEPARATOR) or name.endswith(NAMESPACE_SEPARATOR):
-        raise ToolError(f"tool name must not start or end with {NAMESPACE_SEPARATOR!r}")
-    for char in name:
-        if char in _FORBIDDEN_CHARS:
-            raise ToolError(f"tool name {name!r} contains a forbidden character: {char!r}")
-    for segment in name.split(NAMESPACE_SEPARATOR):
-        if not segment:
-            raise ToolError(f"tool name {name!r} contains an empty segment")
-        if not all(char.isalnum() or char in {"_", "-"} for char in segment):
-            raise ToolError(f"tool name segment {segment!r} is not a plain word")
+    if not TOOL_NAME_PATTERN.fullmatch(name):
+        raise ToolError(
+            f"tool name {name!r} must match {TOOL_NAME_PATTERN.pattern}:"
+            " letters, digits, underscore and hyphen only"
+        )
     return name
 
 
 def namespace_of(name: str) -> str:
-    """`client:shell` -> `client`; a bare `exec` has no namespace."""
-    head, _, _ = name.partition(NAMESPACE_SEPARATOR)
-    return head if head != name else ""
+    """`client_shell` -> `client`; a bare `exec` has no namespace."""
+    head, separator, _ = name.partition(TOOL_NAME_SEPARATOR)
+    return head if separator else ""
 
 
 @dataclass(frozen=True, slots=True)

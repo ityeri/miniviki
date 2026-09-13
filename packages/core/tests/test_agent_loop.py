@@ -65,17 +65,17 @@ async def test_tool_call_then_reply(tmp_path):
 
 
 async def test_the_frozen_toolset_is_what_the_model_sees(tmp_path):
-    loop, _log, ctx = build(tmp_path, [reply("ok")], [tool("exec"), tool("memory:view")])
+    loop, _log, ctx = build(tmp_path, [reply("ok")], [tool("exec"), tool("memory_view")])
     await loop.run(ctx, user_input="hi")
-    assert loop.llm.tools_seen[0] == ("exec", "memory:view")
+    assert loop.llm.tools_seen[0] == ("exec", "memory_view")
 
 
 async def test_unknown_tool_tells_the_model_what_to_do_instead(tmp_path):
-    script = [call("client:shell", {}, call_id="c1"), reply("ok")]
+    script = [call("client_shell", {}, call_id="c1"), reply("ok")]
     loop, log, ctx = build(tmp_path, script, [tool("exec")])
     await loop.run(ctx, user_input="hi")
     result = first_event(log, ctx, EventKind.TOOL_RESULT)
-    assert "no tool named 'client:shell'" in result.payload["content"]
+    assert "no tool named 'client_shell'" in result.payload["content"]
     assert "pick one that exists" in result.payload["content"]
 
 

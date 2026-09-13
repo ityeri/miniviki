@@ -91,9 +91,9 @@ async def test_a_tool_call_round_trips_over_the_wire(tmp_path):
 
 async def test_memory_survives_between_runs(tmp_path):
     script = [
-        call("memory:write", {"key": "memory:user:ide", "body": "PyCharm"}, call_id="c1"),
+        call("memory_write", {"key": "memory:user:ide", "body": "PyCharm"}, call_id="c1"),
         reply("saved"),
-        call("memory:list", {}, call_id="c2"),
+        call("memory_list", {}, call_id="c2"),
         reply("listed")
     ]
     async with serve(build(tmp_path, script)) as http:
@@ -108,7 +108,7 @@ async def test_memory_survives_between_runs(tmp_path):
 
 async def test_a_sub_context_returns_only_its_answer(tmp_path):
     script = [
-        call("context:spawn", {"prompt": "read the docs"}, call_id="c1"),
+        call("context_spawn", {"prompt": "read the docs"}, call_id="c1"),
         reply("the docs say hello"),
         reply("parent done")
     ]
@@ -207,7 +207,7 @@ async def test_updating_tools_notes_the_change_as_a_boundary(tmp_path):
         await http.post(f"/contexts/{context_id}/tools", json={"tools": [{"name": "shell"}]})
         events = await collect(http, context_id)
     assert "boundary" in kinds(events)
-    assert "client:shell" in events[0]["payload"]["text"]
+    assert "client_shell" in events[0]["payload"]["text"]
 
 
 async def test_interrupt_reports_false_when_nothing_is_running(tmp_path):
