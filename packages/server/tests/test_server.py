@@ -243,3 +243,16 @@ async def test_a_failing_model_is_recorded_rather_than_swallowed(tmp_path):
     assert events[-1]["kind"] == "run_end"
     assert events[-1]["payload"]["status"] == "failed"
     assert "the provider refused the request" in events[-1]["payload"]["stop_reason"]
+
+
+async def test_a_parked_run_ends_the_stream_at_the_approval_request(tmp_path):
+    script = [call("exec", {"command": "echo hi"}, call_id="c1"), reply("done")]
+    runtime = build(tmp_path, script, exec_requires_approval=True)
+    async with serve(runtime) as http:
+        context_id = (
+            await http.post("/contexts", json={"capabilities": {"approval_ui": True}})
+        ).json()["id"]
+        await http.post(f"/contexts/{context_id}/input", json={"text": "run it"})
+        parked = await collect(http, context_id)
+    assert parked[-1]["kind"] == "approval_request"
+    assert "run_end" not in kinds(parked)

@@ -4,7 +4,6 @@ from collections.abc import AsyncIterator
 from fastapi import APIRouter, Body, HTTPException
 from fastapi.responses import StreamingResponse
 from miniviki.core.agent import Decision
-from miniviki.core.context import EventKind
 from miniviki.core.errors import ApprovalRequired, ContextNotFound
 from miniviki.mca import ClientCapability, ClientTool, ContextInit
 
@@ -132,7 +131,8 @@ async def _stream(
         for event in events:
             cursor = event.seq + 1
             wire = to_wire(event)
-            if wire is not None:
-                yield format_sse(wire)
-            if event.kind is EventKind.RUN_END:
+            if wire is None:
+                continue
+            yield format_sse(wire)
+            if wire.is_terminal():
                 return

@@ -33,6 +33,11 @@ def to_wire(event: ContextEvent) -> StreamEvent | None:
     payload = dict(event.payload)
     if event.kind is EventKind.APPROVAL:
         payload.setdefault("status", "waiting_approval")
+    if event.kind is EventKind.RUN_END and payload.get("status") == "waiting_approval":
+        # The approval request already ended this turn. Emitting the run end too
+        # would let a client that is resuming hit this stale terminal first and
+        # stop before it ever sees the resumed run's output.
+        return None
     return StreamEvent(seq=event.seq, kind=kind, payload=payload)
 
 
