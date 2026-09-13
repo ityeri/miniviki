@@ -37,21 +37,47 @@ def latest_compact(events: list[ContextEvent]) -> ContextEvent | None:
     return found
 
 
-def project(events: list[ContextEvent]) -> list[Message]:
-    """Fold the log into what the model sees.
+def project(events: list[ContextEvent], include_notes: bool = True) -> list[Message]:
+    """Fold the log into the message list the model sees.
 
-    A COMPACT event supersedes everything before it, so we resume from the
-    newest marker and keep the raw events after it. The superseded events are
-    still in the log -- superseded is not deleted.
+    A note that lands between an assistant message with tool calls and the tool
+    results answering it is not allowed by any provider, and the log can easily
+    put one there -- an approval or a toolset change is recorded before the tool
+    it concerns finishes. So notes are held back until the tool exchange closes.
     """
-    marker = latest_compact(events)
-    summary = str(marker.payload.get("summary", "")) if marker else ""
-    tail = [event for event in events if marker is None or event.seq > marker.seq]
+    start = 0
+    summary = ""
+    for index, event in enumerate(events):
+        if event.kind is EventKind.COMPACT:
+            start = index + 1
+            summary = str(event.payload.get("summary", ""))
     messages: list[Message] = []
     if summary:
         messages.append(Message(role="system", content=f"[compacted] {summary}"))
-    for event in tail:
+    deferred: list[Message] = []
+    awaiting = 0
+    for event in events[start:]:
+        if event.kind is EventKind.TOOL_CALL:
+            message = message_for(event)
+            if message is not None:
+                messages.append(message)
+                awaiting = len(event.payload.get("calls", ()))
+            continue
+        if event.kind is EventKind.TOOL_RESULT:
+            message = message_for(event)
+            if message is not None:
+                messages.append(message)
+            awaiting = max(0, awaiting - 1)
+            if awaiting == 0:
+                messages.extend(deferred)
+                deferred.clear()
+            continue
         message = message_for(event)
-        if message is not None:
+        if message is None:
+            continue
+        if awaiting > 0:
+            deferred.append(message)
+        elif include_notes:
             messages.append(message)
+    messages.extend(deferred)
     return messages

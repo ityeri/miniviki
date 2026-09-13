@@ -142,3 +142,22 @@ def test_threshold_triggers_on_estimated_tokens(tmp_path):
     policy = CompactionPolicy(window_tokens=100, threshold=0.5)
     assert should_compact(log.read("ctx_a"), policy)
     assert not should_compact(log.read("ctx_a"), CompactionPolicy(window_tokens=10_000))
+
+
+def test_a_note_never_lands_between_a_tool_call_and_its_result(tmp_path):
+    log = EventLog(path=tmp_path / "ctx.db")
+    log.append("ctx_a", EventKind.MESSAGE, {"role": "user", "content": "run it"})
+    log.append(
+        "ctx_a",
+        EventKind.TOOL_CALL,
+        {"content": "", "calls": [{"id": "c1", "name": "exec", "arguments": {}}]}
+    )
+    log.append(
+        "ctx_a",
+        EventKind.APPROVAL,
+        {"call_id": "c1", "tool": "exec", "text": "a human allowed this"}
+    )
+    log.append("ctx_a", EventKind.TOOL_RESULT, {"call_id": "c1", "name": "exec", "content": "ok"})
+    messages = project(log.read("ctx_a"))
+    assert [message.role for message in messages] == ["user", "assistant", "tool", "system"]
+    assert messages[-1].content == "a human allowed this"
