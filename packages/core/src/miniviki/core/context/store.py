@@ -150,11 +150,31 @@ class ContextStore:
         ).fetchall()
         return [self.get(str(row[0])) for row in rows]
 
-    def set_toolset_version(self, context_id: str, version: str) -> ContextRecord:
+    def update(
+        self,
+        context_id: str,
+        toolset_version: str | None = None,
+        initial_context_digest: str | None = None,
+        label: str | None = None
+    ) -> ContextRecord:
         if self.log.connection is None:
             raise RuntimeError("context store is closed")
-        self.log.connection.execute(
-            "UPDATE contexts SET toolset_version = ? WHERE id = ?",
-            (version, context_id)
-        )
+        assignments: list[str] = []
+        values: list[object] = []
+        for column, value in (
+            ("toolset_version", toolset_version),
+            ("initial_context_digest", initial_context_digest),
+            ("label", label)
+        ):
+            if value is not None:
+                assignments.append(f"{column} = ?")
+                values.append(value)
+        if assignments:
+            self.log.connection.execute(
+                f"UPDATE contexts SET {', '.join(assignments)} WHERE id = ?",
+                (*values, context_id)
+            )
         return self.get(context_id)
+
+    def set_toolset_version(self, context_id: str, version: str) -> ContextRecord:
+        return self.update(context_id, toolset_version=version)

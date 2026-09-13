@@ -4,8 +4,13 @@ from pathlib import Path
 
 from ..kv import KVStore
 
-_FTS_SCHEMA = "CREATE VIRTUAL TABLE IF NOT EXISTS docs USING fts5(key, body)"
-_PLAIN_SCHEMA = "CREATE TABLE IF NOT EXISTS docs (key TEXT PRIMARY KEY, body TEXT)"
+
+def _fts_schema(table: str) -> str:
+    return f"CREATE VIRTUAL TABLE IF NOT EXISTS {table} USING fts5(key, body)"
+
+
+def _plain_schema(table: str) -> str:
+    return f"CREATE TABLE IF NOT EXISTS {table} (key TEXT PRIMARY KEY, body TEXT)"
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,6 +29,7 @@ class KVSearchIndex:
 
     store: KVStore
     path: Path
+    table: str = "docs"
     connection: sqlite3.Connection | None = None
     fts: bool = True
 
@@ -32,19 +38,21 @@ class KVSearchIndex:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if self.connection is None:
             self.connection = sqlite3.connect(str(self.path), isolation_level=None)
+        if not self.table.isidentifier():
+            raise ValueError(f"table name must be an identifier, got {self.table!r}")
         try:
-            self.connection.executescript(_FTS_SCHEMA)
+            self.connection.executescript(_fts_schema(self.table))
         except sqlite3.OperationalError:
             self.fts = False
-            self.connection.executescript(_PLAIN_SCHEMA)
+            self.connection.executescript(_plain_schema(self.table))
 
     def reindex(self) -> int:
         connection = self._connection()
         keys = self.store.keys()
-        connection.execute("DELETE FROM docs")
+        connection.execute(f"DELETE FROM {self.table}")
         for key in keys:
             connection.execute(
-                "INSERT INTO docs (key, body) VALUES (?, ?)",
+                f"INSERT INTO {self.table} (key, body) VALUES (?, ?)",
                 (key, self.store.get(key))
             )
         return len(keys)
@@ -58,8 +66,8 @@ class KVSearchIndex:
     def _fts_search(self, query: str, limit: int, prefix: str) -> list[SearchHit]:
         connection = self._connection()
         rows = connection.execute(
-            "SELECT key, snippet(docs, 1, '', '', ' … ', 12) FROM docs"
-            " WHERE docs MATCH ? ORDER BY rank LIMIT ?",
+            f"SELECT key, snippet({self.table}, 1, '', '', ' … ', 12) FROM {self.table}"
+            f" WHERE {self.table} MATCH ? ORDER BY rank LIMIT ?",
             (query, limit * 4)
         ).fetchall()
         hits = [
