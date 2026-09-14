@@ -59,3 +59,9 @@ def test_negotiation_never_adds_tools():
     base = [spec("exec"), spec("memory_view")]
     result = negotiate(base, [], ClientCapability(shell=True, filesystem=True, approval_ui=True))
     assert set(result.toolset.names()) == {"exec", "memory_view"}
+
+
+def test_the_relay_gap_does_not_send_the_agent_to_another_machine():
+    text = RELAY_GAP.format(name="client_shell")
+    assert "not a substitute" in text
+    assert "Run the same step" not in text

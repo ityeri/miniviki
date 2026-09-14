@@ -6,8 +6,10 @@ from miniviki.core.tools import CLIENT_NAMESPACE, Toolset, ToolSpec
 from miniviki.mca import ClientCapability, ClientTool
 
 RELAY_GAP = (
-    "error: {name} is a client tool and this build has no relay for it yet. "
-    "Run the same step with `exec` inside the workspace instead."
+    "error: {name} runs on the client's machine and this build has no relay to it, "
+    "so this capability is unavailable. `exec` runs in the server-side workspace, "
+    "which is a different machine -- it is not a substitute. Report the missing "
+    "capability instead of approximating it."
 )
 
 
