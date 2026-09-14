@@ -47,7 +47,8 @@ class ToolSpec:
 
     The handler is deliberately outside the fingerprint: two toolsets that differ
     only in implementation are the same toolset as far as the model is concerned,
-    which is what keeps prompt caching honest.
+    which is what keeps prompt caching honest. `client_tool` is out for the same
+    reason -- the model sees `client_shell`, never whatever the client calls it.
     """
 
     name: str
@@ -57,6 +58,7 @@ class ToolSpec:
     max_result_chars: int = DEFAULT_MAX_RESULT_CHARS
     requires_approval: bool = False
     client_scoped: bool = False
+    client_tool: str = ""
 
     @property
     def namespace(self) -> str:

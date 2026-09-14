@@ -1,7 +1,7 @@
 
-from miniviki.core.tools import CLIENT_NAMESPACE, ToolSpec
+from miniviki.core.tools import CLIENT_NAMESPACE, Toolset, ToolSpec
 from miniviki.mca import ClientCapability, ClientTool
-from miniviki.server.negotiation import RELAY_GAP, negotiate
+from miniviki.server.negotiation import negotiate
 
 
 def spec(name: str, requires_approval: bool = False) -> ToolSpec:
@@ -47,12 +47,13 @@ def test_approval_tools_survive_when_the_client_offers_an_approval_ui():
     assert result.summary() == "every requested capability was granted"
 
 
-async def test_a_client_tool_with_no_relay_says_so_instead_of_pretending():
+def test_a_client_tool_is_marked_as_the_clients_to_run():
+    """The flag is the whole mechanism: dispatch relays on it and nothing else."""
     result = negotiate([], [ClientTool(name="shell")], ClientCapability())
-    handler = result.toolset.get(f"{CLIENT_NAMESPACE}_shell").handler
-    message = await handler()
-    assert message == RELAY_GAP.format(name=f"{CLIENT_NAMESPACE}_shell")
-    assert "exec" in message
+    declared = result.toolset.get(f"{CLIENT_NAMESPACE}_shell")
+    assert declared.client_scoped is True
+    assert declared.client_tool == "shell"
+    assert declared.handler is None
 
 
 def test_negotiation_never_adds_tools():
@@ -61,7 +62,20 @@ def test_negotiation_never_adds_tools():
     assert set(result.toolset.names()) == {"exec", "memory_view"}
 
 
-def test_the_relay_gap_does_not_send_the_agent_to_another_machine():
-    text = RELAY_GAP.format(name="client_shell")
-    assert "not a substitute" in text
-    assert "Run the same step" not in text
+def test_the_clients_own_name_for_a_tool_stays_out_of_the_fingerprint():
+    """The model sees `client_shell`; whatever the client calls it is implementation."""
+    plain = ToolSpec(name="client_shell", description="d", client_scoped=True)
+    renamed = ToolSpec(
+        name="client_shell",
+        description="d",
+        client_scoped=True,
+        client_tool="something_else_entirely"
+    )
+    assert Toolset.from_specs([plain]).version == Toolset.from_specs([renamed]).version
+
+
+def test_negotiation_carries_the_clients_label_into_the_toolset():
+    """The label is what the environment section and a toolset boundary note name."""
+    result = negotiate([], [], ClientCapability(label="ramyon"))
+    assert result.toolset.client_label == "ramyon"
+

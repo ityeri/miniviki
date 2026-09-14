@@ -21,6 +21,10 @@ class AgentLoop:
     Resuming is not a special path: on every iteration we look for tool calls that
     have no result yet and finish those first. An approval that was parked
     yesterday therefore resumes today with no extra machinery.
+
+    A call the client has to run is the same shape, only the executor differs. The
+    request goes into the log, so a client that reconnects still finds it, and the
+    result comes back as an ordinary tool result.
     """
 
     llm: LLMClient
@@ -59,13 +63,22 @@ class AgentLoop:
             steps += 1
             outstanding = self._outstanding_calls(context_id)
             if outstanding:
-                if await self._dispatch(context_id, outstanding) == "approval":
+                signal = await self._dispatch(context_id, outstanding)
+                if signal == "approval":
                     return self._finish(
                         context_id,
                         RunStatus.WAITING_APPROVAL,
                         started_at,
                         steps=steps,
                         stop_reason="a tool is waiting for approval"
+                    )
+                if signal == "relayed":
+                    return self._finish(
+                        context_id,
+                        RunStatus.WAITING_CLIENT,
+                        started_at,
+                        steps=steps,
+                        stop_reason="a tool is waiting for the client to run it"
                     )
                 continue
             completion = await self._think(context_id)
@@ -147,6 +160,13 @@ class AgentLoop:
                 self._result(context_id, call_id, name, f"blocked: {gate.blocked}")
                 continue
             arguments = dict(gate.payload.get("arguments", arguments))
+            if spec.client_scoped:
+                # This can only run on the client's machine, and the client is the one
+                # that gets to allow it. A server side approval would put the gate on
+                # the wrong machine.
+                if self._handle_relay(context_id, spec, call_id, arguments) == "waiting":
+                    return "relayed"
+                continue
             if spec.requires_approval:
                 outcome = self._handle_approval(context_id, spec, call_id, arguments)
                 if outcome == "waiting":
@@ -195,6 +215,41 @@ class AgentLoop:
             }
         )
         return "waiting"
+
+    def _handle_relay(
+        self,
+        context_id: str,
+        spec: ToolSpec,
+        call_id: str,
+        arguments: dict[str, Any]
+    ) -> str:
+        """Hand a call to the client and stop here.
+
+        Nothing here runs the tool, and nothing here may pretend to: the request is
+        recorded so a client that reconnects still finds it, and the call is only
+        resolved when the client's result lands in the log as a tool result.
+        """
+        if not self._requested(context_id, call_id):
+            self.log.append(
+                context_id,
+                EventKind.TOOL_REQUEST,
+                {
+                    "call_id": call_id,
+                    "tool": spec.name,
+                    "client_tool": spec.client_tool,
+                    "arguments": arguments,
+                    "client": self.toolset.client_label
+                }
+            )
+        return "waiting"
+
+    def _requested(self, context_id: str, call_id: str) -> bool:
+        """Already announced? A parked run can be driven again before the client answers."""
+        return any(
+            event.kind is EventKind.TOOL_REQUEST
+            and event.payload.get("call_id") == call_id
+            for event in self.log.read(context_id)
+        )
 
     async def _invoke(self, spec: ToolSpec, arguments: dict[str, Any]) -> str:
         if spec.handler is None:

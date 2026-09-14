@@ -1,16 +1,8 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any
 
 from miniviki.core.tools import CLIENT_NAMESPACE, Toolset, ToolSpec
 from miniviki.mca import ClientCapability, ClientTool
-
-RELAY_GAP = (
-    "error: {name} runs on the client's machine and this build has no relay to it, "
-    "so this capability is unavailable. `exec` runs in the server-side workspace, "
-    "which is a different machine -- it is not a substitute. Report the missing "
-    "capability instead of approximating it."
-)
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +29,11 @@ def qualify(name: str) -> str:
 
 
 def client_specs(client_tools: Sequence[ClientTool]) -> list[ToolSpec]:
+    """Declared client tools, qualified and marked as the client's to run.
+
+    No handler, on purpose: there is nothing here that could run one. Dispatch sees
+    the flag, sends the call out, and waits for the result to come back.
+    """
     specs: list[ToolSpec] = []
     for tool in client_tools:
         name = qualify(tool.name)
@@ -45,17 +42,11 @@ def client_specs(client_tools: Sequence[ClientTool]) -> list[ToolSpec]:
                 name=name,
                 description=tool.description or f"client tool {name}",
                 parameters=tool.parameters or {"type": "object", "properties": {}},
-                handler=_unrelayed(name)
+                client_scoped=True,
+                client_tool=tool.name
             )
         )
     return specs
-
-
-def _unrelayed(name: str):
-    async def run(**_arguments: Any) -> str:
-        return RELAY_GAP.format(name=name)
-
-    return run
 
 
 def negotiate(
@@ -82,4 +73,7 @@ def negotiate(
             for spec in base
             if spec.requires_approval
         ]
-    return Negotiation(toolset=Toolset.from_specs(kept), dropped=tuple(dropped))
+    return Negotiation(
+        toolset=Toolset.from_specs(kept, client_label=capabilities.label),
+        dropped=tuple(dropped)
+    )

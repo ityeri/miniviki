@@ -6,6 +6,7 @@ from typing import Any, Self
 class RunStatus(StrEnum):
     RUNNING = "running"
     WAITING_APPROVAL = "waiting_approval"
+    WAITING_CLIENT = "waiting_client"
     DONE = "done"
     FAILED = "failed"
     INTERRUPTED = "interrupted"

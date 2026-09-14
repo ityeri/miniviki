@@ -1,6 +1,7 @@
 from .app import create_app
 from .bootstrap import HomeLayout, Runtime, load_agent_soul, load_default_soul
 from .env import load_env_files
+from .errors import UnknownClientRequest
 from .hosting import build_client, build_runtime, flag
 from .logging import resolve_level, setup_logging
 from .negotiation import Negotiation, negotiate
@@ -14,6 +15,7 @@ __all__ = [
     "Runtime",
     "Session",
     "SessionRegistry",
+    "UnknownClientRequest",
     "build_client",
     "build_runtime",
     "create_app",

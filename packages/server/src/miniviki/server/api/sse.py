@@ -7,7 +7,10 @@ from miniviki.mca import (
     MESSAGE,
     RUN_END,
     TOOL_CALL,
+    TOOL_REQUEST,
     TOOL_RESULT,
+    WAITING_APPROVAL,
+    WAITING_CLIENT,
     StreamEvent,
 )
 
@@ -17,8 +20,13 @@ WIRE_KIND = {
     EventKind.TOOL_RESULT: TOOL_RESULT,
     EventKind.BOUNDARY: BOUNDARY,
     EventKind.APPROVAL: APPROVAL_REQUEST,
+    EventKind.TOOL_REQUEST: TOOL_REQUEST,
     EventKind.RUN_END: RUN_END
 }
+
+#: A parked run's own end is not news: the request that parked it already told the
+#: client whose move it is.
+PARKED_STATUSES = (WAITING_APPROVAL, WAITING_CLIENT)
 
 
 def to_wire(event: ContextEvent) -> StreamEvent | None:
@@ -32,11 +40,13 @@ def to_wire(event: ContextEvent) -> StreamEvent | None:
         return None
     payload = dict(event.payload)
     if event.kind is EventKind.APPROVAL:
-        payload.setdefault("status", "waiting_approval")
-    if event.kind is EventKind.RUN_END and payload.get("status") == "waiting_approval":
-        # The approval request already ended this turn. Emitting the run end too
-        # would let a client that is resuming hit this stale terminal first and
-        # stop before it ever sees the resumed run's output.
+        payload.setdefault("status", WAITING_APPROVAL)
+    if event.kind is EventKind.TOOL_REQUEST:
+        payload.setdefault("status", WAITING_CLIENT)
+    if event.kind is EventKind.RUN_END and payload.get("status") in PARKED_STATUSES:
+        # The request already ended this turn. Emitting the run end too would let a
+        # client that is resuming hit this stale terminal first and stop before it
+        # ever sees the resumed run's output.
         return None
     return StreamEvent(seq=event.seq, kind=kind, payload=payload)
 

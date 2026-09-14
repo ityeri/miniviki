@@ -234,3 +234,91 @@ async def test_resume_does_not_call_the_model_again_for_a_resolved_call(tmp_path
     assert len(loop.llm.seen) == 2
     await loop.run(ctx)
     assert len(loop.llm.seen) == 3
+
+
+def client_tool(name: str = "client_shell", declared: str = "shell") -> ToolSpec:
+    """The shape negotiation produces: marked as the client's, with no handler here."""
+    return ToolSpec(
+        name=name,
+        description="a shell on the machine the client runs on",
+        client_scoped=True,
+        client_tool=declared
+    )
+
+
+async def test_a_client_tool_parks_the_run_and_never_runs_here(tmp_path):
+    loop, log, ctx = build(
+        tmp_path,
+        [call("client_shell", {"command": "ls"}, call_id="c1")],
+        [client_tool()]
+    )
+    record = await loop.run(ctx, user_input="read my directory")
+    assert record.status is RunStatus.WAITING_CLIENT
+    assert kinds(log, ctx) == ["message", "message", "tool_call", "tool_request"]
+
+
+async def test_the_client_request_carries_both_names(tmp_path):
+    """The model's name for the tool, and the name the client registered a handler for."""
+    loop, log, ctx = build(
+        tmp_path,
+        [call("client_shell", {"command": "ls"}, call_id="c1")],
+        [client_tool()]
+    )
+    await loop.run(ctx, user_input="go")
+    event = first_event(log, ctx, EventKind.TOOL_REQUEST)
+    assert event.payload["tool"] == "client_shell"
+    assert event.payload["client_tool"] == "shell"
+    assert event.payload["arguments"] == {"command": "ls"}
+
+
+async def test_the_request_is_announced_once_however_often_the_run_is_driven(tmp_path):
+    """A parked run can be driven again; the client should not see the call twice."""
+    loop, log, ctx = build(tmp_path, [call("client_shell", {}, call_id="c1")], [client_tool()])
+    await loop.run(ctx, user_input="go")
+    await loop.run(ctx)
+    requested = [event for event in log.read(ctx) if event.kind is EventKind.TOOL_REQUEST]
+    assert len(requested) == 1
+
+
+async def test_the_run_resumes_when_the_clients_result_lands(tmp_path):
+    loop, log, ctx = build(
+        tmp_path,
+        [call("client_shell", {}, call_id="c1"), reply("here it is")],
+        [client_tool()]
+    )
+    parked = await loop.run(ctx, user_input="go")
+    assert parked.status is RunStatus.WAITING_CLIENT
+    log.append(
+        ctx,
+        EventKind.TOOL_RESULT,
+        {"call_id": "c1", "name": "client_shell", "content": "file_a"}
+    )
+    resumed = await loop.run(ctx)
+    assert resumed.status is RunStatus.DONE
+    results = [e.payload["content"] for e in log.read(ctx) if e.kind is EventKind.TOOL_RESULT]
+    assert results == ["file_a"]
+
+
+async def test_a_client_tool_is_never_gated_by_server_side_approval(tmp_path):
+    """The client owns the machine, so the client owns the decision to run on it."""
+    gated = ToolSpec(
+        name="client_shell",
+        description="d",
+        client_scoped=True,
+        client_tool="shell",
+        requires_approval=True
+    )
+    loop, log, ctx = build(tmp_path, [call("client_shell", {}, call_id="c1")], [gated])
+    record = await loop.run(ctx, user_input="go")
+    assert record.status is RunStatus.WAITING_CLIENT
+    assert loop.approvals.pending() == []
+    assert EventKind.APPROVAL not in {event.kind for event in log.read(ctx)}
+
+
+async def test_a_client_call_that_is_not_answered_stays_parked(tmp_path):
+    loop, log, ctx = build(tmp_path, [call("client_shell", {}, call_id="c1")], [client_tool()])
+    await loop.run(ctx, user_input="go")
+    second = await loop.run(ctx)
+    assert second.status is RunStatus.WAITING_CLIENT
+    assert [e.payload["content"] for e in log.read(ctx) if e.kind is EventKind.TOOL_RESULT] == []
+

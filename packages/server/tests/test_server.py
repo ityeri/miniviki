@@ -1,5 +1,6 @@
 from miniviki.core.llm import ScriptedClient, call, reply
-from miniviki.server import Runtime
+from miniviki.mca import ClientCapability, ClientTool, ContextInit
+from miniviki.server import Runtime, SessionRegistry
 from server_support import collect, kinds, serve, tool_results
 
 
@@ -256,3 +257,98 @@ async def test_a_parked_run_ends_the_stream_at_the_approval_request(tmp_path):
         parked = await collect(http, context_id)
     assert parked[-1]["kind"] == "approval_request"
     assert "run_end" not in kinds(parked)
+
+
+CLIENT_CONTEXT = {
+    "capabilities": {"label": "ramyon", "shell": True},
+    "tools": [
+        {
+            "name": "shell",
+            "description": "a shell on the machine this client runs on",
+            "parameters": {"type": "object", "properties": {"command": {"type": "string"}}}
+        }
+    ]
+}
+
+
+async def test_a_client_call_parks_and_then_finishes_on_the_reported_result(tmp_path):
+    script = [call("client_shell", {"command": "ls"}, call_id="c1"), reply("those are your files")]
+    async with serve(build(tmp_path, script)) as http:
+        created = await http.post("/contexts", json=CLIENT_CONTEXT)
+        context_id = created.json()["id"]
+        await http.post(f"/contexts/{context_id}/input", json={"text": "read my directory"})
+        parked = await collect(http, context_id)
+        assert kinds(parked) == ["message", "tool_call", "tool_request"]
+        assert parked[-1]["payload"]["status"] == "waiting_client"
+        assert parked[-1]["payload"]["client_tool"] == "shell"
+        assert tool_results(parked) == []
+
+        reported = await http.post(
+            f"/contexts/{context_id}/tool_results",
+            json={"call_id": "c1", "content": "file_a\nfile_b"}
+        )
+        assert reported.status_code == 200
+        assert reported.json()["resolved"] is True
+        resumed = await collect(http, context_id, from_seq=parked[-1]["seq"] + 1)
+    assert kinds(resumed) == ["tool_result", "message", "run_end"]
+    assert "file_a" in tool_results(resumed)[0]
+    assert resumed[-1]["payload"]["status"] == "done"
+
+
+async def test_a_repeated_result_does_not_drive_an_extra_turn(tmp_path):
+    """A reconnecting client may answer what it already answered."""
+    script = [call("client_shell", {}, call_id="c1"), reply("done")]
+    async with serve(build(tmp_path, script)) as http:
+        context_id = (await http.post("/contexts", json=CLIENT_CONTEXT)).json()["id"]
+        await http.post(f"/contexts/{context_id}/input", json={"text": "go"})
+        await collect(http, context_id)
+        first = await http.post(
+            f"/contexts/{context_id}/tool_results", json={"call_id": "c1", "content": "a"}
+        )
+        again = await http.post(
+            f"/contexts/{context_id}/tool_results", json={"call_id": "c1", "content": "b"}
+        )
+        assert first.json()["resolved"] is True
+        assert again.json()["resolved"] is False
+        assert again.json()["run_id"] == ""
+
+
+async def test_an_unknown_client_call_is_a_404(tmp_path):
+    async with serve(build(tmp_path, [])) as http:
+        context_id = (await http.post("/contexts", json={})).json()["id"]
+        response = await http.post(
+            f"/contexts/{context_id}/tool_results", json={"call_id": "nope", "content": "x"}
+        )
+        assert response.status_code == 404
+
+
+async def test_a_result_without_a_call_id_is_a_400(tmp_path):
+    async with serve(build(tmp_path, [])) as http:
+        context_id = (await http.post("/contexts", json={})).json()["id"]
+        response = await http.post(f"/contexts/{context_id}/tool_results", json={"content": "x"})
+        assert response.status_code == 400
+
+
+async def test_a_client_tool_is_offered_only_when_the_client_declares_it(tmp_path):
+    async with serve(build(tmp_path, [])) as http:
+        without = (await http.post("/contexts", json={})).json()
+        with_tool = (await http.post("/contexts", json=CLIENT_CONTEXT)).json()
+    assert without["toolset_version"] != with_tool["toolset_version"]
+
+
+async def test_the_prompt_names_the_client_and_its_tools(tmp_path):
+    """Nothing downstream can name the client if the label dies in negotiation."""
+    runtime = build(tmp_path, [])
+    registry = SessionRegistry(runtime=runtime)
+    session = await registry.create(
+        ContextInit(
+            capabilities=ClientCapability(label="ramyon", shell=True, approval_ui=True),
+            tools=(ClientTool(name="shell", description="a shell over there"),)
+        )
+    )
+    assert session.toolset.client_label == "ramyon"
+    assert "Attached client: ramyon" in session.system
+    assert "`client_*`" in session.system
+    assert "`client_shell`" in session.system
+    runtime.aclose()
+

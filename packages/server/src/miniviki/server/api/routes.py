@@ -7,7 +7,9 @@ from miniviki.core.agent import Decision
 from miniviki.core.errors import ApprovalRequired, ContextNotFound
 from miniviki.mca import ClientCapability, ClientTool, ContextInit
 
+from ..errors import UnknownClientRequest
 from ..orchestration.runner import RunDriver
+from ..relay import record_result
 from ..session import Session, SessionRegistry
 from .sse import format_sse, to_wire
 
@@ -72,6 +74,24 @@ def build_router(registry: SessionRegistry, driver: RunDriver) -> APIRouter:
         except ApprovalRequired as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         return {"ok": True, "decision": str(decision), "run_id": driver.start(session)}
+
+    @router.post("/contexts/{context_id}/tool_results")
+    async def report_tool_result(context_id: str, body: dict | None = OPTIONAL_BODY) -> dict:
+        session = _require(registry, context_id)
+        payload = body or {}
+        call_id = str(payload.get("call_id", ""))
+        if not call_id:
+            raise HTTPException(status_code=400, detail="call_id is required")
+        try:
+            resolved = record_result(
+                registry.runtime.log, session.id, call_id, str(payload.get("content", ""))
+            )
+        except UnknownClientRequest as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        if not resolved:
+            # Already answered. Resuming again would drive the run an extra turn.
+            return {"ok": True, "call_id": call_id, "resolved": False, "run_id": ""}
+        return {"ok": True, "call_id": call_id, "resolved": True, "run_id": driver.start(session)}
 
     @router.post("/contexts/{context_id}/tools")
     async def update_tools(context_id: str, body: dict | None = OPTIONAL_BODY) -> dict:

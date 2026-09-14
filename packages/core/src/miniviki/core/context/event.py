@@ -6,6 +6,7 @@ from typing import Any, Self
 class EventKind(StrEnum):
     MESSAGE = "message"
     TOOL_CALL = "tool_call"
+    TOOL_REQUEST = "tool_request"
     TOOL_RESULT = "tool_result"
     COMPACT = "compact"
     BOUNDARY = "boundary"
