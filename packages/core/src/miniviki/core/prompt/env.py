@@ -22,12 +22,23 @@ def render_environment(toolset: Toolset) -> str:
     ]
     if toolset.client_label:
         lines += [
-            f"Attached client: {toolset.client_label} -- a separate machine. Tools",
-            "that would run there are named `client_*`, and this build has no relay to",
-            "them: the user's files and shell are out of reach. Say that plainly",
-            "instead of approximating it with `exec`.",
+            f"Attached client: {toolset.client_label} -- a separate machine, and the one",
+            "the user is actually at.",
             ""
         ]
+        if any(spec.client_scoped for spec in toolset.specs):
+            lines += [
+                "Tools named `client_*` run there, not here, and hand their results back",
+                "to you: they are how you reach the user's own files and shell. `exec`",
+                "cannot stand in for one of them.",
+                ""
+            ]
+        else:
+            lines += [
+                "It offered no tools for its own machine, so the user's files and shell are",
+                "out of reach this turn. Say so rather than approximating them with `exec`.",
+                ""
+            ]
     lines.append(f"Toolset {toolset.version}. Tools callable right now:")
     if toolset.specs:
         lines.extend(f"- `{spec.name}` — {spec.description}" for spec in toolset.specs)
