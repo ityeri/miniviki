@@ -7,7 +7,8 @@ dependencies = [
     "miniviki-mca @ git+https://github.com/ityeri/mca.git@main",
     "fastapi>=0.115",
     "python-dotenv>=1.0",
-    "uvicorn>=0.34"
+    "uvicorn>=0.34",
+    "reger>=0.1.3",
 ]
 
 [tool.uv.sources]

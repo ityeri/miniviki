@@ -190,6 +190,7 @@ dependencies = [
     { name = "miniviki-core" },
     { name = "miniviki-mca" },
     { name = "python-dotenv" },
+    { name = "reger" },
     { name = "uvicorn" },
 ]
 
@@ -199,6 +200,7 @@ requires-dist = [
     { name = "miniviki-core", editable = "packages/core" },
     { name = "miniviki-mca", git = "https://github.com/ityeri/mca.git?rev=main" },
     { name = "python-dotenv", specifier = ">=1.0" },
+    { name = "reger", specifier = ">=0.1.3" },
     { name = "uvicorn", specifier = ">=0.34" },
 ]
 
@@ -458,6 +460,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/6a/53/ed9d74092561d4b01a2ef1349d52cdbc135e526c245f366b089cfca6de49/python_dotenv-1.2.3.tar.gz", hash = "sha256:a20a594dabeaa385725aa239d5244871c143ecb356add8a20fcf23773a6c3a35", size = 58945, upload-time = "2026-08-16T16:54:54.067Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0d/17/c5c6b53ddc18f297992099b3d9ec16c855c0ccc83263a21fe4d1c625ec6c/python_dotenv-1.2.3-py3-none-any.whl", hash = "sha256:904552145e8bfed22162c09dab1c2b9b54fefa7b23ba780f4f26ca0316b0f0d9", size = 22780, upload-time = "2026-08-16T16:54:52.473Z" },
+]
+
+[[package]]
+name = "reger"
+version = "0.1.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f0/8b/d5d47c0b3a49c20672dcc8addd00013e18aebb62d997db9364828b074d73/reger-0.1.3.tar.gz", hash = "sha256:9909288b22b2148645531c889e9367ccb88058d20a5f59b452edf978258cd4df", size = 3727, upload-time = "2026-05-27T03:33:31.245Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ea/92/40b4deee461f79ebf9de8441bd1f6c90feb8bd97f80e82e8508109cff71d/reger-0.1.3-py3-none-any.whl", hash = "sha256:db04362e3fa0065fd638fc887afd0a729856684557ea92f141bc78fc792630d0", size = 5219, upload-time = "2026-05-27T03:33:30.206Z" },
 ]
 
 [[package]]

@@ -1,3 +1,4 @@
+import logging
 import os
 
 from miniviki.core.errors import MinivikiError
@@ -5,6 +6,7 @@ from miniviki.core.llm import EchoClient, LLMClient, OpenAICompatClient, Scripte
 
 from .bootstrap import Runtime
 from .env import load_env_files
+from .logging import setup_logging
 
 TRUE_WORDS = {"1", "true", "yes", "on"}
 
@@ -38,8 +40,15 @@ def build_client() -> LLMClient:
 
 def build_runtime() -> Runtime:
     layout, _loaded = load_env_files()
+    setup_logging()
+    client = build_client()
+    _logger.info("home %s", layout.root)
+    _logger.info("model client %s", type(client).__name__)
     return Runtime.build(
-        llm=build_client(),
+        llm=client,
         home=layout.root,
         exec_requires_approval=flag("MINIVIKI_EXEC_APPROVAL")
     )
+
+
+_logger = logging.getLogger(__name__)
