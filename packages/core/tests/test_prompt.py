@@ -105,3 +105,18 @@ def test_memory_summary_is_included_when_provided():
 def test_metadata_pins_the_toolset_version():
     toolset = Toolset.from_specs([spec("exec")])
     assert assemble([], toolset).metadata["toolset_version"] == toolset.version
+
+
+def test_environment_names_the_machine_boundary():
+    toolset = Toolset.from_specs([spec("exec")], client_label="ramyon")
+    rendered = render_environment(toolset)
+    assert "not on the machine the user is sitting at" in rendered
+    assert "out of reach" in rendered
+
+
+def test_environment_stays_free_of_per_context_values():
+    """A path in here would move the digest for identical declarations."""
+    toolset = Toolset.from_specs([spec("exec")], client_label="ramyon")
+    rendered = render_environment(toolset)
+    assert "/workspaces/" not in rendered
+    assert "ctx_" not in rendered
