@@ -13,6 +13,7 @@ dependencies = [
 
 [tool.uv.sources]
 miniviki-core = { workspace = true }
+miniviki-mca = { path = "../../../mca", editable = true }
 
 [build-system]
 requires = ["hatchling"]
