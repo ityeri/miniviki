@@ -48,6 +48,7 @@ from miniviki.llm_interfaces.request import (
     ToolSpec,
 )
 from miniviki.llm_interfaces.response import Completion, StopReason, Usage
+from miniviki.llm_interfaces.transport import Transport, TransportResponse
 
 __all__ = [
     'Capabilities',
@@ -100,4 +101,7 @@ __all__ = [
     'Completion',
     'StopReason',
     'Usage',
+
+    'Transport',
+    'TransportResponse',
 ]
