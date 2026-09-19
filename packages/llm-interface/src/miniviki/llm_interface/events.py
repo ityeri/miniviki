@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from miniviki.llm_interfaces.response import StopReason, Usage
+from miniviki.llm_interface.response import StopReason, Usage
 
 
 @dataclass(frozen=True)

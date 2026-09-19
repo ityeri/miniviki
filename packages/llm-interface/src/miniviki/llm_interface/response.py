@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import StrEnum
 
-from miniviki.llm_interfaces.content import Turn
+from miniviki.llm_interface.content import Turn
 
 
 class StopReason(StrEnum):

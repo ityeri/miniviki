@@ -1,6 +1,6 @@
-from miniviki.llm_interfaces.capabilities import Capabilities
-from miniviki.llm_interfaces.client import LLMClient, ProviderAdapter
-from miniviki.llm_interfaces.content import (
+from miniviki.llm_interface.capabilities import Capabilities
+from miniviki.llm_interface.client import LLMClient, ProviderAdapter
+from miniviki.llm_interface.content import (
     Block,
     Context,
     Media,
@@ -14,7 +14,7 @@ from miniviki.llm_interfaces.content import (
     Turn,
     Unknown,
 )
-from miniviki.llm_interfaces.errors import (
+from miniviki.llm_interface.errors import (
     ContextRejected,
     InterfaceError,
     MalformedPayload,
@@ -23,7 +23,7 @@ from miniviki.llm_interfaces.errors import (
     StreamBroken,
     UnsupportedCapability,
 )
-from miniviki.llm_interfaces.events import (
+from miniviki.llm_interface.events import (
     ArgsDelta,
     BlockStarted,
     BlockStopped,
@@ -39,7 +39,7 @@ from miniviki.llm_interfaces.events import (
     TextDelta,
     UsageReported,
 )
-from miniviki.llm_interfaces.request import (
+from miniviki.llm_interface.request import (
     Limits,
     ReasoningRequest,
     Request,
@@ -47,8 +47,8 @@ from miniviki.llm_interfaces.request import (
     ToolChoiceMode,
     ToolSpec,
 )
-from miniviki.llm_interfaces.response import Completion, StopReason, Usage
-from miniviki.llm_interfaces.transport import Transport, TransportResponse
+from miniviki.llm_interface.response import Completion, StopReason, Usage
+from miniviki.llm_interface.transport import Transport, TransportResponse
 
 __all__ = [
     'Capabilities',

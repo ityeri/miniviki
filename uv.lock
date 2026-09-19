@@ -5,7 +5,7 @@ requires-python = ">=3.14"
 [manifest]
 members = [
     "core",
-    "interface",
+    "llm-interface",
     "miniviki",
 ]
 
@@ -23,11 +23,11 @@ name = "core"
 version = "0.1.0"
 source = { editable = "packages/core" }
 dependencies = [
-    { name = "interface" },
+    { name = "llm-interface" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "interface", editable = "packages/interface" }]
+requires-dist = [{ name = "llm-interface", editable = "packages/llm-interface" }]
 
 [[package]]
 name = "iniconfig"
@@ -39,9 +39,9 @@ wheels = [
 ]
 
 [[package]]
-name = "interface"
+name = "llm-interface"
 version = "0.1.0"
-source = { editable = "packages/interface" }
+source = { editable = "packages/llm-interface" }
 
 [package.optional-dependencies]
 test = [

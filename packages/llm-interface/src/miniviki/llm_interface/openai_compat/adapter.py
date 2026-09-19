@@ -4,9 +4,9 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from miniviki.llm_interfaces import Request, ToolChoice, ToolChoiceMode, ToolSpec
-from miniviki.llm_interfaces.capabilities import Capabilities
-from miniviki.llm_interfaces.content import (
+from miniviki.llm_interface import Request, ToolChoice, ToolChoiceMode, ToolSpec
+from miniviki.llm_interface.capabilities import Capabilities
+from miniviki.llm_interface.content import (
     Block,
     Media,
     MediaKind,
@@ -19,7 +19,7 @@ from miniviki.llm_interfaces.content import (
     Turn,
     Unknown,
 )
-from miniviki.llm_interfaces.errors import (
+from miniviki.llm_interface.errors import (
     ContextRejected,
     InterfaceError,
     MalformedPayload,
@@ -27,7 +27,7 @@ from miniviki.llm_interfaces.errors import (
     RateLimited,
     UnsupportedCapability,
 )
-from miniviki.llm_interfaces.events import (
+from miniviki.llm_interface.events import (
     ArgsDelta,
     BlockStarted,
     BlockStopped,
@@ -39,7 +39,7 @@ from miniviki.llm_interfaces.events import (
     TextDelta,
     UsageReported,
 )
-from miniviki.llm_interfaces.response import Completion, StopReason, Usage
+from miniviki.llm_interface.response import Completion, StopReason, Usage
 
 # chat completions has no block index, so one is derived: text and reasoning are
 # pinned and tool calls start past them, which keeps the three from colliding
@@ -49,7 +49,6 @@ _FIRST_TOOL_INDEX = 2
 
 _BAD_REQUEST = 400
 _RATE_LIMIT = 429
-
 
 # what the wire format can express. a deployment may support less, so the
 # declared set is overridable per instance
@@ -81,7 +80,7 @@ class ChatCompletionsAdapter:
         return self.declared
 
     def lower_request(
-        self, request: Request, stream: bool = False
+            self, request: Request, stream: bool = False
     ) -> Mapping[str, Any]:
         self._reject_unrepresentable(request)
         body: dict[str, Any] = {

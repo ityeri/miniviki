@@ -1,13 +1,13 @@
 from collections.abc import AsyncIterator, Mapping
 from dataclasses import dataclass, field
 
-from miniviki.llm_interfaces.capabilities import Capabilities
-from miniviki.llm_interfaces.events import StreamEvent
-from miniviki.llm_interfaces.openai_compat.adapter import ChatCompletionsAdapter
-from miniviki.llm_interfaces.openai_compat.sse import sse_payloads
-from miniviki.llm_interfaces.request import Request
-from miniviki.llm_interfaces.response import Completion
-from miniviki.llm_interfaces.transport import Transport
+from miniviki.llm_interface.capabilities import Capabilities
+from miniviki.llm_interface.events import StreamEvent
+from miniviki.llm_interface.openai_compat.adapter import ChatCompletionsAdapter
+from miniviki.llm_interface.openai_compat.sse import sse_payloads
+from miniviki.llm_interface.request import Request
+from miniviki.llm_interface.response import Completion
+from miniviki.llm_interface.transport import Transport
 
 _BAD_REQUEST = 400
 _CHAT_COMPLETIONS_PATH = '/chat/completions'

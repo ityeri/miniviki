@@ -3,7 +3,8 @@ from collections.abc import AsyncIterator, Mapping, Sequence
 from typing import Any
 
 import pytest
-from miniviki.llm_interfaces import (
+
+from miniviki.llm_interface import (
     ArgsDelta,
     BlockStopped,
     ContextRejected,
@@ -25,7 +26,7 @@ from miniviki.llm_interfaces import (
     UnsupportedCapability,
     UsageReported,
 )
-from miniviki.llm_interfaces.openai_compat import (
+from miniviki.llm_interface.openai_compat import (
     ChatCompletionsAdapter,
     OpenAIChatClient,
     sse_payloads,
@@ -74,10 +75,10 @@ class FakeTransport:
 
 class FakeResponse:
     def __init__(
-        self,
-        status: int = 200,
-        payload: Mapping[str, Any] | None = None,
-        frames: Sequence[bytes] | None = None
+            self,
+            status: int = 200,
+            payload: Mapping[str, Any] | None = None,
+            frames: Sequence[bytes] | None = None
     ):
         self.status = status
         self.payload = payload or {}
@@ -308,7 +309,8 @@ async def test_client_stream_turns_frames_into_canonical_events():
     frames = [
         chunk({'role': 'assistant', 'content': ''}),
         chunk({'content': '확인'}),
-        chunk({'tool_calls': [{'index': 0, 'id': 'call_1', 'type': 'function', 'function': {'name': 'weather', 'arguments': '{"city":'}}]}),
+        chunk({'tool_calls': [{'index': 0, 'id': 'call_1', 'type': 'function',
+                               'function': {'name': 'weather', 'arguments': '{"city":'}}]}),
         chunk({'tool_calls': [{'index': 0, 'function': {'arguments': '"seoul"}'}}]}),
         chunk({}, finish='tool_calls'),
         f'data: {json.dumps({"choices": [], "usage": {"prompt_tokens": 11, "completion_tokens": 7}})}\n\n'.encode(),

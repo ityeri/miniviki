@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
 
-from miniviki.llm_interfaces.content import Context
+from miniviki.llm_interface.content import Context
 
 
 class ToolChoiceMode(StrEnum):
