@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from interface.response import StopReason, Usage
+from miniviki.llm_interfaces.response import StopReason, Usage
 
 
 @dataclass(frozen=True)
@@ -87,17 +87,17 @@ class ProviderEvent:
 
 
 type StreamEvent = (
-    Queued
-    | Started
-    | InProgress
-    | BlockStarted
-    | TextDelta
-    | ArgsDelta
-    | ReasoningDelta
-    | SignatureDelta
-    | BlockStopped
-    | UsageReported
-    | Completed
-    | Failed
-    | ProviderEvent
+        Queued
+        | Started
+        | InProgress
+        | BlockStarted
+        | TextDelta
+        | ArgsDelta
+        | ReasoningDelta
+        | SignatureDelta
+        | BlockStopped
+        | UsageReported
+        | Completed
+        | Failed
+        | ProviderEvent
 )

@@ -1,11 +1,11 @@
 from collections.abc import AsyncIterator, Mapping
 from typing import Any, Protocol, runtime_checkable
 
-from interface.capabilities import Capabilities
-from interface.errors import InterfaceError
-from interface.events import StreamEvent
-from interface.request import Request
-from interface.response import Completion
+from miniviki.llm_interfaces.capabilities import Capabilities
+from miniviki.llm_interfaces.errors import InterfaceError
+from miniviki.llm_interfaces.events import StreamEvent
+from miniviki.llm_interfaces.request import Request
+from miniviki.llm_interfaces.response import Completion
 
 
 @runtime_checkable

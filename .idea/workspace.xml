@@ -4,14 +4,39 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a3f7a78d-0703-4a65-bfe3-d9c44a5ebeef" name="Changes" comment="" />
+    <list default="true" id="a3f7a78d-0703-4a65-bfe3-d9c44a5ebeef" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/core/src/core/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/packages/core/src/miniviki/core/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/interface/src/interface/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/packages/interface/src/miniviki/llm_interfaces/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/interface/src/interface/capabilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/packages/interface/src/miniviki/llm_interfaces/capabilities.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/interface/src/interface/client.py" beforeDir="false" afterPath="$PROJECT_DIR$/packages/interface/src/miniviki/llm_interfaces/client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/interface/src/interface/content.py" beforeDir="false" afterPath="$PROJECT_DIR$/packages/interface/src/miniviki/llm_interfaces/content.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/interface/src/interface/errors.py" beforeDir="false" afterPath="$PROJECT_DIR$/packages/interface/src/miniviki/llm_interfaces/errors.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/interface/src/interface/events.py" beforeDir="false" afterPath="$PROJECT_DIR$/packages/interface/src/miniviki/llm_interfaces/events.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/interface/src/interface/py.typed" beforeDir="false" afterPath="$PROJECT_DIR$/packages/interface/src/miniviki/llm_interfaces/py.typed" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/interface/src/interface/request.py" beforeDir="false" afterPath="$PROJECT_DIR$/packages/interface/src/miniviki/llm_interfaces/request.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/interface/src/interface/response.py" beforeDir="false" afterPath="$PROJECT_DIR$/packages/interface/src/miniviki/llm_interfaces/response.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="FormatOnSaveOptions">
+    <option name="myRunOnSave" value="true" />
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="OptimizeOnSaveOptions">
+    <option name="myRunOnSave" value="true" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -39,14 +64,18 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "develop",
+    "git-widget-placeholder": "base",
     "last_opened_file_path": "/wasans/coding/miniviki/packages/interface/src/interface",
-    "settings.editor.selected.configurable": "project.propVCSSupport.Confirmation"
+    "settings.editor.selected.configurable": "actions.on.save"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/packages/interface/src/interface" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/packages/interface/src/miniviki" />
+      <recent name="$PROJECT_DIR$/packages/core/src/miniviki" />
     </key>
   </component>
   <component name="SharedIndexes">

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from interface.content import MediaKind
+from miniviki.llm_interfaces.content import MediaKind
 
 
 @dataclass(frozen=True)
