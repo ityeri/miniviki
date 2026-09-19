@@ -125,8 +125,8 @@ class ChatCompletionsAdapter:
         if not choices:
             usage = payload.get('usage')
             if usage is None:
-                return (ProviderEvent(kind='chunk_without_choices', payload=dict(payload)),)
-            return (UsageReported(usage=self._parse_usage(usage)),)
+                return [ProviderEvent(kind='chunk_without_choices', payload=dict(payload))]
+            return [UsageReported(usage=self._parse_usage(usage))]
         choice = choices[0]
         delta = choice.get('delta') or {}
         events: list[StreamEvent] = []
@@ -151,7 +151,7 @@ class ChatCompletionsAdapter:
             )
         if not events:
             events.append(ProviderEvent(kind='empty_delta', payload=dict(payload)))
-        return tuple(events)
+        return events
 
     def parse_error(self, status: int, payload: Mapping[str, Any]) -> InterfaceError:
         detail = self._error_detail(payload)

@@ -1,5 +1,5 @@
 import json
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Mapping, Sequence
 from typing import Any
 
 import pytest
@@ -73,10 +73,15 @@ class FakeTransport:
 
 
 class FakeResponse:
-    def __init__(self, status: int = 200, payload: Mapping[str, Any] | None = None, frames: tuple[bytes, ...] = ()):
+    def __init__(
+        self,
+        status: int = 200,
+        payload: Mapping[str, Any] | None = None,
+        frames: Sequence[bytes] | None = None
+    ):
         self.status = status
         self.payload = payload or {}
-        self.frames = frames
+        self.frames = list(frames or [])
 
     async def json(self) -> Mapping[str, Any]:
         return self.payload
@@ -85,7 +90,7 @@ class FakeResponse:
         return _iterate(self.frames)
 
 
-async def _iterate(frames: tuple[bytes, ...]) -> AsyncIterator[bytes]:
+async def _iterate(frames: Sequence[bytes]) -> AsyncIterator[bytes]:
     for frame in frames:
         yield frame
 
@@ -230,7 +235,7 @@ def test_parse_event_announces_the_text_block_once():
     assert started[1].index == 0
     assert started[1].kind == 'text'
     text = adapter.parse_event(json.loads(chunk({'content': '확인'})[6:]))
-    assert text == (TextDelta(index=0, text='확인'),)
+    assert text == [TextDelta(index=0, text='확인')]
 
 
 def test_parse_event_maps_parallel_tool_calls_to_distinct_indices():
@@ -243,7 +248,7 @@ def test_parse_event_maps_parallel_tool_calls_to_distinct_indices():
     assert [event.index for event in events] == [2, 3]
     assert [event.name for event in events] == ['weather', 'time']
     fragment = {'tool_calls': [{'index': 1, 'function': {'arguments': '{"zone"'}}]}
-    assert adapter.parse_event(json.loads(chunk(fragment)[6:])) == (ArgsDelta(index=3, fragment='{"zone"'),)
+    assert adapter.parse_event(json.loads(chunk(fragment)[6:])) == [ArgsDelta(index=3, fragment='{"zone"')]
 
 
 def test_parse_event_keeps_unknown_chunks():
@@ -257,14 +262,14 @@ def test_parse_event_reports_usage_on_the_final_chunk():
     adapter = ChatCompletionsAdapter()
     payload = {'choices': [], 'usage': {'prompt_tokens': 10, 'completion_tokens': 4}}
     events = adapter.parse_event(payload)
-    assert events == (UsageReported(usage=events[0].usage),)
+    assert events == [UsageReported(usage=events[0].usage)]
     assert events[0].usage.output_tokens == 4
 
 
 def test_parse_event_completes_on_finish_reason():
     adapter = ChatCompletionsAdapter()
     events = adapter.parse_event(json.loads(chunk({}, finish='length')[6:]))
-    assert events == (BlockStopped(index=0), events[1])
+    assert events == [BlockStopped(index=0), events[1]]
     assert events[1].stop_reason is StopReason.MAX_TOKENS
     assert events[1].raw_stop_reason == 'length'
 
@@ -300,15 +305,15 @@ async def test_client_complete_posts_the_lowered_body():
 
 
 async def test_client_stream_turns_frames_into_canonical_events():
-    frames = (
+    frames = [
         chunk({'role': 'assistant', 'content': ''}),
         chunk({'content': '확인'}),
         chunk({'tool_calls': [{'index': 0, 'id': 'call_1', 'type': 'function', 'function': {'name': 'weather', 'arguments': '{"city":'}}]}),
         chunk({'tool_calls': [{'index': 0, 'function': {'arguments': '"seoul"}'}}]}),
         chunk({}, finish='tool_calls'),
         f'data: {json.dumps({"choices": [], "usage": {"prompt_tokens": 11, "completion_tokens": 7}})}\n\n'.encode(),
-        b'data: [DONE]\n\n',
-    )
+        b'data: [DONE]\n\n'
+    ]
     transport = FakeTransport(FakeResponse(frames=frames))
     client = OpenAIChatClient(transport=transport)
     events = [event async for event in client.stream(Request(model=MODEL, messages=weather_history()))]
