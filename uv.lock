@@ -1,0 +1,31 @@
+version = 1
+revision = 3
+requires-python = ">=3.14"
+
+[manifest]
+members = [
+    "core",
+    "interface",
+    "miniviki",
+]
+
+[[package]]
+name = "core"
+version = "0.1.0"
+source = { editable = "packages/core" }
+dependencies = [
+    { name = "interface" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "interface", editable = "packages/interface" }]
+
+[[package]]
+name = "interface"
+version = "0.1.0"
+source = { editable = "packages/interface" }
+
+[[package]]
+name = "miniviki"
+version = "0.1.0"
+source = { editable = "." }

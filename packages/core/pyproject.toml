@@ -1,0 +1,22 @@
+[project]
+name = "core"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "ityeri", email = "ityeri9@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "interface",
+]
+
+[project.scripts]
+core = "core:main"
+
+[build-system]
+requires = ["uv_build>=0.12.11,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+interface = { workspace = true }
