@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
 
-from miniviki.llm_interface.content import Context
+from miniviki.llm_interface import Turn
 
 
 class ToolChoiceMode(StrEnum):
@@ -46,7 +46,7 @@ class Limits:
 @dataclass(frozen=True)
 class Request:
     model: str
-    messages: Context = field(default_factory=list)
+    messages: list[Turn] = field(default_factory=list)
     instructions: str | None = None
     tools: list[ToolSpec] = field(default_factory=list)
     tool_choice: ToolChoice = field(default_factory=ToolChoice)

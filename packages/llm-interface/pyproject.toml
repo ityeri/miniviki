@@ -23,3 +23,6 @@ build-backend = "uv_build"
 asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.uv.build-backend]
+module-name = "miniviki.llm_interface"

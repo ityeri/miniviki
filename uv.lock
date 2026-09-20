@@ -59,7 +59,7 @@ provides-extras = ["test"]
 [[package]]
 name = "miniviki"
 version = "0.1.0"
-source = { editable = "." }
+source = { virtual = "." }
 
 [[package]]
 name = "packaging"

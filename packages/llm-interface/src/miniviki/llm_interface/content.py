@@ -79,6 +79,3 @@ type Block = Text | Media | ToolCall | ToolResult | Reasoning | ServerTool | Unk
 class Turn:
     role: Role
     blocks: list[Block] = field(default_factory=list)
-
-
-type Context = list[Turn]

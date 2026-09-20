@@ -17,3 +17,6 @@ build-backend = "uv_build"
 
 [tool.uv.sources]
 llm-interface = { workspace = true }
+
+[tool.uv.build-backend]
+module-name = "miniviki.core"
